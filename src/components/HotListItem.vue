@@ -9,7 +9,7 @@
     <div class="item-main-content">
       <h3 class="item-title">{{ item.title }}</h3>
       <div class="item-meta-info">
-        <span class="hot-value">🔥 {{ formatHotValue(item.hotScore) }}</span>
+        <span class="hot-value">🔥 {{ formatHotValue(item.heat) }}</span>
         <span class="dot">·</span>
         <span class="time-stamp">{{ formatTime(item.publishTime) }}</span>
         <span v-if="clickCount > 0" class="click-tag"
@@ -48,7 +48,7 @@ onMounted(() => {
   }
 });
 
-// 人性化热度转换数据机制
+// 人性化热度转换数据机制（支持规范要求的 heat 字段换算）
 const formatHotValue = (score) => {
   if (!score) return "0";
   if (score >= 10000) {
