@@ -1,5 +1,77 @@
-# Vue 3 + Vite
+# ⚡ 全网热榜聚合聚合系统 (hotlist-app)
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+本系统为华中师范大学人工智能教育学部《Web 程序设计》课程实验四的期末考核大作业。项目基于 **Vue 3 (Composition API)** 与 **Vite** 构建，成功实现了一个兼具高性能、多数据源结构统一、高可靠本地缓存以及多状态条件渲染的多平台热搜榜单一站式聚合系统。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+---
+
+## 🌟 项目核心亮点与功能设计
+
+### 1. 严格的组件化拆分与工程目录规范
+
+项目代码完全遵循指导书规定的标准目录结构进行组织开发：
+
+- `api/`：使用 `request.js` 对 Axios 实例进行精细化二次封装，并于 `hotlist.js` 中独立管理业务接口函数。
+- `components/`：高度内聚地抽离出 `HotListTab` (平台切换导航)、`HotListItem` (热搜卡片项)、`LoadingState` (骨架屏动态加载动画) 和 `EmptyState` (空状态/无匹配提示) 等高复用性组件。
+- `utils/`：独立封装高效的本地数据缓存体系。
+
+### 2. 多数据源统一处理与高保真本地 Mock 架构
+
+- 为绕过传统外部 API 的跨域限制 (CORS) 与不用梯子环境下的网络阻断异常，项目采用纯前端高性能**异步高保真 Mock 数据源机制**驱动。
+- 完美覆盖**微博、知乎、B站**三大主流平台，且每个平台在初始化时均能瞬间稳健派发 **30 条以上**的高保真独立热搜数据。
+- 严格在 API 数据层将多平台异构原始字段进行抹平，统一清洗并强绑定转换为标准的统一数据模型。
+
+### 3. 基于 W3C 规范的本地数据时效缓存机制
+
+- 在 `utils/cache.js` 中全手动实现了具备 5 分钟 (300 秒) 强时效控制的本地 `localStorage` 缓存策略。
+- 严格依照 `hotlist_${platform}_cache` 的规范健名格式进行精准写入与过期强行销毁。
+- 切换 Tab 时优先高响应度命中缓存，点击顶部“刷新数据”按钮时即时强行清除对应平台缓存并重新加载，大幅降低服务器负载。
+
+### 4. 健壮的网络异常拦截与多状态渲染切换
+
+- 精准封装 Axios 请求/响应拦截器。在发起异步行为前联动 showLoading，并在成功或异常逻辑分支自动触发隐退。
+- 针对“网络连接失败”、“请求超时”及“服务器异常”等状况做到了定制化的捕获提示。
+- 在数据加载中平滑切换至波纹骨架屏 (Skeleton Animation)，在无匹配结果时呈现优雅的空状态。
+
+### 5. 交互增量：关键词实时过滤与双向数据排序
+
+- 支持在顶部搜索栏输入关键词后，自动调用核心函数 `searchHotList` 对当前平台的所有热搜标题进行秒级实时局部过滤。
+- 提供下拉菜单交互，支持在“默认热榜排名”与“按热度值(heat)从高到低”两种核心业务排序策略间自由无缝流转。
+
+---
+
+## 📦 项目完整技术栈
+
+- **核心框架**：Vue 3.5.x (Composition API, `<script setup>`)
+- **构建工具**：Vite 8.x
+- **网络请求**：Axios 1.16.x
+- **样式处理**：原生高兼容性 CSS (BEM 规范封装)
+
+---
+
+## 🚀 本地开发与运行步骤
+
+请确保你的本地系统已全局安装 **Node.js** 环境 (建议版本 `v18.x` 或以上)。
+
+### 1. 克隆/解压项目
+
+打开终端并切换进入当前项目的根目录 (即包含 `package.json` 的 `hotlist-app` 文件夹)：
+
+```bash
+cd hotlist-app
+```
+
+### 2. 安装依赖
+
+执行包管理命令安装前端项目所需的全部核心依赖与开发辅助插件：
+
+```bash
+npm install
+```
+
+### 3. 启动本地调试服务器 (开发模式)
+
+运行以下命令开启 Vite 本地热更新开发服务器：
+
+```bash
+npm run dev
+```
