@@ -9,6 +9,9 @@
     <div class="item-main-content">
       <h3 class="item-title">{{ item.title }}</h3>
       <div class="item-meta-info">
+        <span :class="['platform-tag', item.platform]">
+          {{ getPlatformName(item.platform) }}
+        </span>
         <span class="hot-value">🔥 {{ formatHotValue(item.heat) }}</span>
         <span class="dot">·</span>
         <span class="time-stamp">{{ formatTime(item.publishTime) }}</span>
@@ -48,7 +51,17 @@ onMounted(() => {
   }
 });
 
-// 人性化热度转换数据机制（支持规范要求的 heat 字段换算）
+// 🎯 严格对齐最新 PDF 要求：将转换后的平台标识英文标识转化为中文文字展示
+const getPlatformName = (platform) => {
+  const nameMap = {
+    weibo: "微博",
+    zhihu: "知乎",
+    bilibili: "B站",
+  };
+  return nameMap[platform] || "热点";
+};
+
+// 人性化热度转换数据机制
 const formatHotValue = (score) => {
   if (!score) return "0";
   if (score >= 10000) {
@@ -57,7 +70,7 @@ const formatHotValue = (score) => {
   return score.toLocaleString();
 };
 
-// 格式化时间戳/时间串
+// 格式化时间串
 const formatTime = (timeStr) => {
   if (!timeStr) return "";
   const date = new Date(timeStr);
@@ -72,16 +85,14 @@ const formatTime = (timeStr) => {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 };
 
-// 行为逻辑：外部安全跳转并累计点击统计
+// 安全重定向外部原始源链接链接并累计统计
 const goExternalSource = () => {
-  // 累加点击量
   clickCount.value++;
   localStorage.setItem(
     `click_hot_${props.item.id}`,
     clickCount.value.toString(),
   );
 
-  // 安全重定向外部原始源链接链接
   if (props.item.url) {
     window.open(props.item.url, "_blank", "noopener,noreferrer");
   }
@@ -112,6 +123,7 @@ const goExternalSource = () => {
   color: #86909c;
   margin-right: 14px;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 .rank-badge.top-three {
   color: #fff;
@@ -148,9 +160,35 @@ const goExternalSource = () => {
   align-items: center;
   font-size: 12px;
   color: #86909c;
+  flex-wrap: wrap;
+  gap: 6px;
 }
+
+/* 🎯 新增平台彩色文字标签样式 */
+.platform-tag {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.platform-tag.weibo {
+  background-color: #fbeeed;
+  color: #eb5757;
+}
+.platform-tag.zhihu {
+  background-color: #e8f3ff;
+  color: #165dff;
+}
+.platform-tag.bilibili {
+  background-color: #feeff7;
+  color: #f5319d;
+}
+
 .dot {
-  margin: 0 6px;
+  margin: 0 2px;
+}
+.hot-value {
+  color: #ff7a45;
 }
 .click-tag {
   margin-left: auto;
@@ -166,6 +204,7 @@ const goExternalSource = () => {
   border-radius: 4px;
   overflow: hidden;
   margin-left: 8px;
+  flex-shrink: 0;
 }
 .item-thumb-wrapper img {
   width: 100%;
