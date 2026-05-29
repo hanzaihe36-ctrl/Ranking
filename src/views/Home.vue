@@ -62,7 +62,7 @@ import EmptyState from "../components/EmptyState.vue";
 import { getTabs, getHotList } from "../api/hotlist";
 import { setCache, getCache, clearCache } from "../utils/cache";
 
-const currentTab = ref("bilibili"); // 默认激活B站，可修改为'weibo'或'zhihu'
+const currentTab = ref("weibo"); // 默认激活微博
 const categories = ref([]);
 const listData = ref([]);
 const loading = ref(false);
@@ -91,32 +91,37 @@ const fetchHotList = async (platform, forceRefresh = false) => {
   loading.value = true;
   errorMsg.value = "";
 
-  // 严格遵循实验规范的缓存键名规则 (动态追加平台标识)
-  const cacheKey = `hotlist_${platform}_cache`;
+  // 🎯 严格遵循实验规范的包含动态时间戳的缓存键名规则
+  const cacheKey = `hotlist_${platform}_${Date.now()}`;
 
-  // 优先读取本地缓存
+  // 检索本地是否存在属于当前平台的历史缓存键
   if (!forceRefresh) {
-    const cachedArticles = getCache(cacheKey);
-    if (cachedArticles) {
-      listData.value = cachedArticles;
-      loading.value = false;
-      return;
+    const localKeys = Object.keys(localStorage);
+    const targetKey = localKeys.find((key) =>
+      key.startsWith(`hotlist_${platform}_`),
+    );
+    if (targetKey) {
+      const cachedArticles = getCache(targetKey);
+      if (cachedArticles) {
+        listData.value = cachedArticles;
+        loading.value = false;
+        return;
+      }
     }
   }
 
-  // 缓存不存在或已过期，发起真实 API 网络请求
+  // 缓存不存在或强刷状态下，发起异步数据加载
   try {
     const data = await getHotList(platform);
     listData.value = data || [];
     if (listData.value.length > 0) {
-      // 成功获取后写入缓存，时效 5 分钟 (300000ms)
+      // 写入满足规范命名的本地缓存，时效 5 分钟 (300000ms)
       setCache(cacheKey, listData.value, 300000);
     } else {
       errorMsg.value = "暂无数据";
     }
   } catch (err) {
     listData.value = [];
-    // 拦截器已弹出 alert，这里负责承载页面状态兜底文案
     errorMsg.value = "网络连接失败";
   } finally {
     loading.value = false;
@@ -127,9 +132,15 @@ const fetchHotList = async (platform, forceRefresh = false) => {
  * 实验要求核心函数 2：刷新指定平台数据 (refreshHotList)
  */
 const refreshHotList = async (platform) => {
-  const cacheKey = `hotlist_${platform}_cache`;
-  clearCache(cacheKey); // 清除该平台的本地缓存
-  await fetchHotList(platform, true); // 强行发起真实网络请求并更新缓存
+  // 强刷逻辑：动态找出本地特定前缀的 Key 并彻底销毁
+  const localKeys = Object.keys(localStorage);
+  const targetKey = localKeys.find((key) =>
+    key.startsWith(`hotlist_${platform}_`),
+  );
+  if (targetKey) {
+    clearCache(targetKey);
+  }
+  await fetchHotList(platform, true); // 强制发起全新数据获取
 };
 
 /**
@@ -146,12 +157,11 @@ const searchHotList = (keyword, list) => {
  * 实验要求核心函数 4：排序(按热度或排名) (sortHotList)
  */
 const sortHotList = (list, by) => {
-  const targetList = [...list]; // 浅拷贝一份，避免直接污染响应式原始数组
+  const targetList = [...list];
   if (by === "heat") {
-    return targetList.sort((a, b) => b.heat - a.heat); // 按热度高低降序排列
+    return targetList.sort((a, b) => b.heat - a.heat); // 按热度降序排列
   }
-  // 默认返回保持原有的 rank 排名顺序
-  return targetList;
+  return targetList; // 默认按排名
 };
 
 // 联动：利用计算属性实时获取过滤、排序完成后的最终渲染数组
